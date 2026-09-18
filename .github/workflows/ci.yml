@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: "2"
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC Debug
+            cc: gcc
+            cxx: g++
+          - name: Clang Debug
+            cc: clang
+            cxx: clang++
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ninja-build
+      - name: Configure
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: cmake --preset debug -DGRADYX_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build --preset debug
+      - name: Test
+        run: ctest --preset debug
+
+  sanitizers:
+    name: ASan and UBSan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang ninja-build
+      - name: Configure
+        env:
+          CC: clang
+          CXX: clang++
+        run: cmake --preset asan-ubsan -DGRADYX_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build --preset asan-ubsan
+      - name: Test
+        run: ctest --preset asan-ubsan
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitizer-test-logs
+          path: build/asan-ubsan/Testing/Temporary/
+
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang-format
+      - name: Check formatting
+        run: tools/format.sh --check
+
+  benchmark:
+    name: Release Benchmark Smoke
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ninja-build
+      - name: Configure
+        run: cmake --preset release-bench
+      - name: Build
+        run: cmake --build --preset release-bench
+      - name: Run benchmark smoke test
+        run: ctest --preset release-bench -L benchmark-smoke
+      - name: Record benchmark
+        run: |
+          build/release-bench/benchmarks/gradyx_benchmarks \
+            --benchmark_min_time=0.01s \
+            --benchmark_out=benchmark-results.json \
+            --benchmark_out_format=json
+      - name: Upload benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.json
