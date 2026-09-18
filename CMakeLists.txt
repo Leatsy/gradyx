@@ -37,7 +37,15 @@ include(GradyXDependencies)
 
 gradyx_validate_build_options()
 
-add_library(gradyx_core STATIC src/core/version.cc)
+add_library(
+  gradyx_core STATIC
+  src/core/device.cc
+  src/core/dtype.cc
+  src/core/layout.cc
+  src/core/shape.cc
+  src/core/status.cc
+  src/core/version.cc
+)
 add_library(gradyx::core ALIAS gradyx_core)
 target_compile_features(gradyx_core PUBLIC cxx_std_20)
 target_include_directories(

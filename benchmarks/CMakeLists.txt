@@ -1,4 +1,8 @@
-add_executable(gradyx_benchmarks version_benchmark.cc)
+add_executable(
+  gradyx_benchmarks
+  core_types_benchmark.cc
+  version_benchmark.cc
+)
 target_link_libraries(
   gradyx_benchmarks
   PRIVATE gradyx::gradyx benchmark::benchmark_main
