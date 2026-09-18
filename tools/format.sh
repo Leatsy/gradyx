@@ -10,13 +10,20 @@ if ! command -v "${clang_format}" >/dev/null 2>&1; then
   exit 1
 fi
 
+source_dirs=()
+for relative_dir in include src backend tests benchmarks; do
+  if [[ -d "${project_root}/${relative_dir}" ]]; then
+    source_dirs+=("${project_root}/${relative_dir}")
+  fi
+done
+
+if [[ ${#source_dirs[@]} -eq 0 ]]; then
+  exit 0
+fi
+
 mapfile -d '' source_files < <(
   find \
-    "${project_root}/include" \
-    "${project_root}/src" \
-    "${project_root}/backend" \
-    "${project_root}/tests" \
-    "${project_root}/benchmarks" \
+    "${source_dirs[@]}" \
     -type f \
     \( -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cc' -o -name '*.cpp' \) \
     -print0

@@ -70,9 +70,9 @@ jobs:
       - name: Install clang-format
         run: |
           sudo apt-get update
-          sudo apt-get install --yes clang-format
+          sudo apt-get install --yes clang-format-18
       - name: Check formatting
-        run: tools/format.sh --check
+        run: CLANG_FORMAT=clang-format-18 tools/format.sh --check
 
   benchmark:
     name: Release Benchmark Smoke

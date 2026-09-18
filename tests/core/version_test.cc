@@ -1,8 +1,8 @@
 #include "gradyx/core/version.h"
 
-#include <string_view>
-
 #include <gtest/gtest.h>
+
+#include <string_view>
 
 namespace gradyx {
 namespace {

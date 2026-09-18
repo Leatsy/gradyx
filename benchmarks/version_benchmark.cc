@@ -1,6 +1,6 @@
-#include "gradyx/core/version.h"
-
 #include <benchmark/benchmark.h>
+
+#include "gradyx/core/version.h"
 
 namespace gradyx {
 namespace {
