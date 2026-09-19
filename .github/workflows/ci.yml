@@ -36,6 +36,12 @@ jobs:
         run: cmake --build --preset debug
       - name: Test
         run: ctest --preset debug
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.name }}
+          path: build/debug/Testing/Temporary/
 
   sanitizers:
     name: ASan and UBSan
@@ -61,6 +67,24 @@ jobs:
         with:
           name: sanitizer-test-logs
           path: build/asan-ubsan/Testing/Temporary/
+
+  lint:
+    name: Clang-Tidy
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang clang-tidy ninja-build
+      - name: Lint and test
+        run: tools/lint.sh
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-test-logs
+          path: build/lint/Testing/Temporary/
 
   format:
     name: Format
@@ -88,15 +112,9 @@ jobs:
       - name: Build
         run: cmake --build --preset release-bench
       - name: Run benchmark smoke test
-        run: ctest --preset release-bench -L benchmark-smoke
-      - name: Record benchmark
-        run: |
-          build/release-bench/benchmarks/gradyx_benchmarks \
-            --benchmark_min_time=0.01s \
-            --benchmark_out=benchmark-results.json \
-            --benchmark_out_format=json
+        run: tools/run_benchmarks.sh
       - name: Upload benchmark
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
-          path: benchmark-results.json
+          path: build/release-bench/benchmark-results.json

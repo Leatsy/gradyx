@@ -59,25 +59,62 @@ gradyx_set_project_warnings(gradyx_core)
 gradyx_enable_instrumentation(gradyx_core)
 gradyx_enable_clang_tidy(gradyx_core)
 
-# Runtime and backend targets establish dependency direction without defining
-# their Phase 0.3 interfaces prematurely.
-add_library(gradyx_runtime INTERFACE)
+add_library(gradyx_runtime STATIC src/runtime/registry.cc)
 add_library(gradyx::runtime ALIAS gradyx_runtime)
+target_compile_features(gradyx_runtime PUBLIC cxx_std_20)
+target_include_directories(
+  gradyx_runtime
+  PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 target_link_libraries(gradyx_runtime INTERFACE gradyx::core)
+gradyx_set_project_warnings(gradyx_runtime)
+gradyx_enable_instrumentation(gradyx_runtime)
+gradyx_enable_clang_tidy(gradyx_runtime)
 
-add_library(gradyx_backend_cpu INTERFACE)
+add_library(gradyx_backend_cpu STATIC backend/cpu/runtime.cc)
 add_library(gradyx::backend_cpu ALIAS gradyx_backend_cpu)
-target_link_libraries(gradyx_backend_cpu INTERFACE gradyx::runtime)
+target_compile_features(gradyx_backend_cpu PUBLIC cxx_std_20)
+target_include_directories(
+  gradyx_backend_cpu
+  PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+target_link_libraries(gradyx_backend_cpu PUBLIC gradyx::runtime)
+gradyx_set_project_warnings(gradyx_backend_cpu)
+gradyx_enable_instrumentation(gradyx_backend_cpu)
+gradyx_enable_clang_tidy(gradyx_backend_cpu)
 
 add_library(gradyx INTERFACE)
 add_library(gradyx::gradyx ALIAS gradyx)
 target_link_libraries(gradyx INTERFACE gradyx::backend_cpu)
 
 if(GRADYX_ENABLE_CUDA)
-  message(
-    FATAL_ERROR
-      "GRADYX_ENABLE_CUDA is reserved for Phase 0.4 and is not implemented yet"
+  find_package(CUDAToolkit 11.0 REQUIRED)
+
+  add_library(gradyx_backend_cuda STATIC backend/cuda/toolkit.cc)
+  add_library(gradyx::backend_cuda ALIAS gradyx_backend_cuda)
+  target_compile_features(gradyx_backend_cuda PUBLIC cxx_std_20)
+  target_include_directories(
+    gradyx_backend_cuda
+    PUBLIC
+      "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+      "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
   )
+  target_compile_definitions(gradyx_backend_cuda PRIVATE GRADYX_HAS_CUDA=1)
+  target_link_libraries(
+    gradyx_backend_cuda
+    PRIVATE CUDA::cudart
+    PUBLIC gradyx::runtime
+  )
+  gradyx_set_project_warnings(gradyx_backend_cuda)
+  gradyx_enable_instrumentation(gradyx_backend_cuda)
+  gradyx_enable_clang_tidy(gradyx_backend_cuda)
+
+  target_link_libraries(gradyx INTERFACE gradyx::backend_cuda)
 endif()
 
 if(GRADYX_BUILD_TESTS)

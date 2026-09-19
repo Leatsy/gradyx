@@ -1,6 +1,7 @@
 add_executable(
   gradyx_benchmarks
   core_types_benchmark.cc
+  lifecycle_benchmark.cc
   version_benchmark.cc
 )
 target_link_libraries(

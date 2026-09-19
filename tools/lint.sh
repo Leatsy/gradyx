@@ -6,3 +6,4 @@ readonly project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cmake --preset lint -S "${project_root}"
 cmake --build --preset lint
+ctest --test-dir "${project_root}/build/lint" --output-on-failure

@@ -71,6 +71,14 @@
       "cacheVariables": {
         "GRADYX_BUILD_BENCHMARKS": "ON"
       }
+    },
+    {
+      "name": "cuda",
+      "displayName": "CUDA Debug",
+      "inherits": "debug",
+      "cacheVariables": {
+        "GRADYX_ENABLE_CUDA": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -102,6 +110,11 @@
     {
       "name": "release-bench",
       "configurePreset": "release-bench",
+      "jobs": 0
+    },
+    {
+      "name": "cuda",
+      "configurePreset": "cuda",
       "jobs": 0
     }
   ],
@@ -144,6 +157,13 @@
     {
       "name": "release-bench",
       "configurePreset": "release-bench",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "cuda",
+      "configurePreset": "cuda",
       "output": {
         "outputOnFailure": true
       }
